@@ -130,51 +130,45 @@ class WriteORCA(WriteABC):
         """
         # Using the ORCA compound functionality
         # Write the coordinates
+        file.write(f"! opt {config.opt_method} nopop\n")
+        file.write(f"%pal nprocs  {config.n_proc} end\n")
+        file.write(f"%maxcore  {config.memory}\n")
+        file.write(f'%base "{job_name}_opt"\n')
+        self._write_constrained_atoms(file, scanned_atoms)
         file.write(f"* xyz   {config.charge}   {config.multiplicity}\n")
         self._write_coords(atnums, coords, file)
         file.write(' *\n')
 
-        file.write(f"%pal nprocs  {config.n_proc} end\n")
-        file.write(f"%maxcore  {config.memory}\n")
-
-        # Start compound job
-        file.write('%Compound\n\n')
-        # Do the initial optimisation
-        file.write('New_Step\n')
-        file.write(f"! opt {config.opt_method} nopop\n")
-        file.write(f'%base "{job_name}_opt"\n')
-        self._write_constrained_atoms(file, scanned_atoms)
-        file.write('STEP_END\n\n')
-
         # Get charge first
-        file.write('New_Step\n')
+        file.write('$new_job\n')
         # PModel used for initial guess such that using XTB would not pose a
         # problem.
         file.write(f"! {config.c_method} chelpg Hirshfeld PModel nopop\n")
+        file.write(f"%pal nprocs  {config.n_proc} end\n")
+        file.write(f"%maxcore  {config.memory}\n")
         file.write(f'%base "{job_name}_charge"\n')
-        file.write('STEP_END\n\n')
 
         # Do the scan
-        file.write('New_Step\n')
+        file.write('$new_job\n')
         file.write(f"! opt {config.opt_method} nopop\n")
         file.write(f'%base "{job_name}_scan"\n')
+        file.write(f"%pal nprocs  {config.n_proc} end\n")
+        file.write(f"%maxcore  {config.memory}\n")
         self._write_scanned_atoms(file, scanned_atoms, start_angle, config.scan_step_size)
         file.write(f"*xyzfile {config.charge} {config.multiplicity} {job_name}_opt.xyz\n")
-        file.write('STEP_END\n\n')
 
         # Do the single point energy
-        file.write('New_Step\n')
+        file.write('$new_job\n')
         # PModel used for initial guess such that using XTB would not pose a
         # problem.
         file.write(f"! {config.sp_method} PModel nopop\n")
         file.write(f'%base "{job_name}_sp"\n')
+        file.write(f"%pal nprocs  {config.n_proc} end\n")
+        file.write(f"%maxcore  {config.memory}\n")
         file.write(
             f"*xyzfile {config.charge} {config.multiplicity} "
             f"{job_name}_scan.allxyz\n")
-        file.write('STEP_END\n\n')
 
-        # Close compound block
-        file.write('\nEND\n')
 
     @staticmethod
     def _write_scanned_atoms(file, scanned_atoms, start_angle, step_size):
