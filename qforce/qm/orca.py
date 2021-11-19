@@ -458,9 +458,6 @@ class ReadORCA(ReadABC):
 
         file = open(out_file, 'r')
         line = file.readline()
-        # Skip to the step after geometry optimisation
-        while not 'FINAL ENERGY EVALUATION AT' in line:
-            line = file.readline()
 
         while "NBO analysis completed" not in line:
             line = file.readline()
